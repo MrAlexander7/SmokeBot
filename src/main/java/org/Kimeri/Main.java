@@ -10,5 +10,9 @@ public class Main {
         Bot bot = new Bot();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
         telegramBotsApi.registerBot(bot);
+
+        DataBase dataBase = new DataBase();
+        dataBase.main(args);
+
     }
 }
