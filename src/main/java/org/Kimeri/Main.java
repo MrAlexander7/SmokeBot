@@ -11,8 +11,6 @@ public class Main {
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
         telegramBotsApi.registerBot(bot);
 
-        DataBase dataBase = new DataBase();
-        dataBase.main(args);
-
+        DataBase.main(args);
     }
 }

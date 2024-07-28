@@ -56,4 +56,35 @@ public class Buttons {
 
         return keyboard;
     }
+
+    public static InlineKeyboardMarkup catalogButtons() {
+
+        InlineKeyboardButton backMain = new InlineKeyboardButton();
+        backMain.setText("Назад");
+        backMain.setCallbackData("/back:");
+
+        InlineKeyboardButton next = new InlineKeyboardButton();
+        next.setText("->");
+        next.setCallbackData("/next:");
+
+        InlineKeyboardButton back = new InlineKeyboardButton();
+        back.setText("<-");
+        back.setCallbackData("/backPage:");
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        row1.add(backMain);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        row2.add(back);
+        row2.add(next);
+
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        rows.add(row1);
+        rows.add(row2);
+
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+        keyboard.setKeyboard(rows);
+
+        return keyboard;
+    }
 }

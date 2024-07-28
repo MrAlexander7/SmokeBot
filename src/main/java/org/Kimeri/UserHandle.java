@@ -11,11 +11,19 @@ public class UserHandle {
     SendMessage message = new SendMessage();
 
     DataBase dataBase = new DataBase();
+
+    int backPage = 0;
+
     @SneakyThrows
     public void handle(Update update) {
         switch (update.getMessage().getText()) {
             case "/start":
                 System.out.println("start");
+                if (DataBase.editMode == 1) {
+                    DataBase.editMode = 0;
+                    DataBase.cursor.close();
+                    DataBase.cursor = null;
+                }
                 message.setChatId(update.getMessage().getChatId().toString());
                 message.setText(MessageUser.STARTMESSAGEUSER);
                 message.setReplyMarkup(Buttons.mainButtons());
@@ -30,10 +38,12 @@ public class UserHandle {
                 break;
             case "/catalog":
                 System.out.println("catalog");
-                message.setChatId(update.getMessage().getChatId().toString());
+                String id = update.getMessage().getChatId().toString();
+                message.setChatId(id);
                 message.setText(MessageUser.CATALOG);
                 bot.execute(message);
-                dataBase.viewData(DataBase.connectionString, DataBase.databaseName, DataBase.collectionName, update);
+                dataBase.initCursor();
+                dataBase.viewData(id, null, update.getMessage().getMessageId(), "/next:");
                 break;
             case "/contact":
                 System.out.println("contact");
@@ -52,6 +62,7 @@ public class UserHandle {
     @SneakyThrows
     public void handleCallback(Update update, CallbackQuery callbackQuery) {
         System.out.println("callback");
+        dataBase.initCursor();
 
         SendMessage message = new SendMessage();
 
@@ -62,11 +73,14 @@ public class UserHandle {
         switch (command) {
             case "/catalog":
                 System.out.println("catalog callback");
-                message.setChatId(messages.getChatId().toString());
+                String idCallBack = update.getCallbackQuery().getMessage().getChatId().toString();
+                Integer messageId = messages.getMessageId();
+                message.setChatId(idCallBack);
                 message.setText(MessageUser.CATALOG);
                 bot.execute(message);
-                dataBase.viewData(DataBase.connectionString, DataBase.databaseName, DataBase.collectionName, update);
+               dataBase.viewData(idCallBack, update.getCallbackQuery().getId(), messageId, update.getCallbackQuery().getData());
                 break;
+
             case "/contact":
                 System.out.println("contact");
                 message.setChatId(messages.getChatId().toString());
@@ -74,6 +88,7 @@ public class UserHandle {
                 message.setReplyMarkup(Buttons.backButton());
                 bot.execute(message);
                 break;
+
             case "/help":
                 System.out.println("help");
                 message.setChatId(messages.getChatId().toString());
@@ -81,13 +96,26 @@ public class UserHandle {
                 message.setReplyMarkup(Buttons.backButton());
                 bot.execute(message);
                 break;
+
             case "/back":
                 System.out.println("back");
+                DataBase.editMode = 0;
                 message.setChatId(messages.getChatId().toString());
                 message.setText(MessageUser.STARTMESSAGEUSER);
                 message.setReplyMarkup(Buttons.mainButtons());
                 bot.execute(message);
                 break;
+
+            case "/next":
+                System.out.println("nextPage");
+                dataBase.viewData(messages.getChatId().toString(), update.getCallbackQuery().getId(), messages.getMessageId(), update.getCallbackQuery().getData());
+                break;
+
+            case "/backPage":
+                System.out.println("backPage");
+                dataBase.viewData(messages.getChatId().toString(), update.getCallbackQuery().getId(), messages.getMessageId(), update.getCallbackQuery().getData());
+                break;
+
             default:
                 System.out.println("default");
                 message.setChatId(messages.getChatId().toString());

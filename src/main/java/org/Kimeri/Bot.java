@@ -8,6 +8,7 @@ public class Bot extends TelegramLongPollingBot {
     @SneakyThrows
     @Override
     public void onUpdateReceived(Update update) {
+
         if (update.hasMessage() && update.getMessage().getChatId().equals(MessageUser.ADMINID)) {
             System.out.println("Admin");
             AdminHandle adminHandle = new AdminHandle();
