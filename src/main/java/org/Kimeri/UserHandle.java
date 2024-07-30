@@ -16,47 +16,16 @@ public class UserHandle {
 
     @SneakyThrows
     public void handle(Update update) {
-        switch (update.getMessage().getText()) {
-            case "/start":
-                System.out.println("start");
-                if (DataBase.editMode == 1) {
-                    DataBase.editMode = 0;
-                    DataBase.cursor.close();
-                    DataBase.cursor = null;
-                }
-                message.setChatId(update.getMessage().getChatId().toString());
-                message.setText(MessageUser.STARTMESSAGEUSER);
-                message.setReplyMarkup(Buttons.mainButtons());
-                bot.execute(message);
-                break;
-            case "/help":
-                System.out.println("help");
-                message.setChatId(update.getMessage().getChatId().toString());
-                message.setText(MessageUser.HELP);
-                message.setReplyMarkup(Buttons.backButton());
-                bot.execute(message);
-                break;
-            case "/catalog":
-                System.out.println("catalog");
-                String id = update.getMessage().getChatId().toString();
-                message.setChatId(id);
-                message.setText(MessageUser.CATALOG);
-                bot.execute(message);
-                dataBase.initCursor();
-                dataBase.viewData(id, null, update.getMessage().getMessageId(), "/next:");
-                break;
-            case "/contact":
-                System.out.println("contact");
-                message.setChatId(update.getMessage().getChatId().toString());
-                message.setText(MessageUser.CONTACT);
-                message.setReplyMarkup(Buttons.backButton());
-                bot.execute(message);
-                break;
-            default:
-                message.setChatId(update.getMessage().getChatId().toString());
-                message.setText("Не вірна команда");
-                bot.execute(message);
-                break;
+        if (update.getMessage().getText().equals("/start")) {
+            System.out.println("start");
+            message.setChatId(update.getMessage().getChatId().toString());
+            message.setText(MessageUser.STARTMESSAGEUSER);
+            message.setReplyMarkup(Buttons.mainButtons());
+            bot.execute(message);
+        } else {
+            message.setChatId(update.getMessage().getChatId().toString());
+            message.setText("Не вірна команда");
+            bot.execute(message);
         }
     }
     @SneakyThrows
@@ -99,7 +68,6 @@ public class UserHandle {
 
             case "/back":
                 System.out.println("back");
-                DataBase.editMode = 0;
                 message.setChatId(messages.getChatId().toString());
                 message.setText(MessageUser.STARTMESSAGEUSER);
                 message.setReplyMarkup(Buttons.mainButtons());

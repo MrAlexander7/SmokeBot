@@ -8,9 +8,6 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.*;
 import lombok.SneakyThrows;
 import org.bson.Document;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +23,11 @@ public class DataBase {
 
     private static MongoClient mongoClient;
     public static MongoCursor<Document> cursor;
-    private static List<Document> shownDocuments = new ArrayList<>();
-    private static int limit = 3;
-    public static int editMode = 0;
-    private static int currentPage = 0;
-
-    Bot bot = new Bot();
-    SendMessage message = new SendMessage();
+    public static List<Document> shownDocuments = new ArrayList<>();
+    private static int limit = 2;
+    public static int currentPage = 0;
+    private static long totalDocuments = 0;
+    private static int stopNextPage = 0;
 
     public static void main(String[] args) {
         ServerApi serverApi = ServerApi.builder()
@@ -56,6 +51,7 @@ public class DataBase {
     }
 
     public void initCursor() {
+        System.out.println("initCursor");
         if (cursor == null || !cursor.hasNext()) {
             if (mongoClient == null) {
                 mongoClient = MongoClients.create(connectionString);
@@ -63,74 +59,73 @@ public class DataBase {
             MongoDatabase database = mongoClient.getDatabase(databaseName);
             MongoCollection<Document> collection = database.getCollection(collectionName);
             cursor = collection.find().iterator();
+            totalDocuments = collection.countDocuments();
+            shownDocuments.clear();
         }
     }
 
     @SneakyThrows
-    public void viewData(String chatId, String callbackQueryId, Integer messageId, String callbackData) {
+    public String viewData(String chatId, String callbackQueryId, Integer messageId, String callbackData) {
         //create a method to view data from the MongoDataBase in telegram bot and call it in the UserHandle class
         System.out.println("viewData");
 
         int count = 0;
+
+        text.setLength(0);
+
         if ("/next:".equals(callbackData) || "/catalog:".equals(callbackData)) {
-            currentPage++;
-            if (shownDocuments.size() < currentPage * limit) {
-                while (cursor.hasNext() && count < limit) {
-                    Document doc = cursor.next();
-                    shownDocuments.add(doc);
-                    printDocument(doc, text);
-                    count++;
-                }
-                if (!cursor.hasNext()) {
-                    cursor.close();
-                    cursor = null;
+            if (currentPage * limit < totalDocuments) {
+                currentPage++;
+                int startIndex = (currentPage - 1) * limit;
+                if (shownDocuments.size() < startIndex + limit) {
+                    while (cursor.hasNext() && count < limit) {
+                        Document doc = cursor.next();
+                        shownDocuments.add(doc);
+                        printDocument(doc, text);
+                        count++;
+                    }
+                    if (!cursor.hasNext()) {
+                        cursor.close();
+                        cursor = null;
+                    }
+                } else {
+                    int endIndex = Math.min(startIndex + limit, shownDocuments.size());
+                    for (int i = startIndex; i < endIndex; i++) {
+                        printDocument(shownDocuments.get(i), text);
+                    }
                 }
             } else {
+                int pages = (int) Math.ceil((double) totalDocuments / limit);
+                if (stopNextPage == 1) {
+                    text.append("Ви досягли кінця списку.\n");
+                } else {
+                    currentPage++;
+                    stopNextPage = 1;
+                    if (currentPage >= pages) {
+                        text.append("Ви досягли кінця списку.\n");
+
+                    }
+                }
+                //text.append("Ви досягли кінця списку.\n");
+            }
+        } else if ("/backPage:".equals(callbackData)) {
+            if (currentPage > 1) {
+                currentPage--;
                 int startIndex = (currentPage - 1) * limit;
                 int endIndex = Math.min(startIndex + limit, shownDocuments.size());
                 for (int i = startIndex; i < endIndex; i++) {
                     printDocument(shownDocuments.get(i), text);
                 }
-            }
-        } else if ("/backPage:".equals(callbackData) && currentPage > 1) {
-            currentPage--;
-            int startIndex = (currentPage - 1) * limit;
-            int endIndex = Math.min(startIndex + limit, shownDocuments.size());
-            for (int i = startIndex; i < endIndex; i++) {
-                printDocument(shownDocuments.get(i), text);
+            } else {
+                currentPage = 0;
+                text.append("Ви досягли початку списку.\n");
             }
         }
 
+        String pageNumberText = "Сторінка " + currentPage + "\n\n";
+        text.insert(0, pageNumberText);
 
-        /*while (cursor.hasNext() && count < limit) {
-                    Document name = cursor.next();
-                    printDocument(name, text);
-                    count++;
-                }
-
-            if (!cursor.hasNext()) {
-                cursor.close();
-                cursor = null;
-            }*/
-
-        if (editMode == 1) {
-            if (callbackQueryId != null) {
-                EditMessageText newMessage = new EditMessageText();
-                newMessage.setChatId(chatId);
-                newMessage.setMessageId(messageId);
-                newMessage.setText(text.toString());
-                newMessage.setReplyMarkup(Buttons.catalogButtons());
-                bot.execute(newMessage);
-            }
-        } else {
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId);
-            message.setText(text.toString());
-            message.setReplyMarkup(Buttons.catalogButtons());
-            editMode = 1;
-            bot.execute(message);
-
-        }
+        return text.toString();
 
     }
 
@@ -142,10 +137,8 @@ public class DataBase {
             if (!key.equals("_id")) {
                 if (key.equals("Назва")) {
                     text.append("----------").append("\n").append(key).append(": ").append(name.get(key)).append("\n");
-                    //text += "-----------------" + "\n" + key + " : " + name.get(key) + "\n";
                 } else {
                     text.append(key).append(": ").append(name.get(key)).append("\n");
-                    //text += key + " : " + name.get(key) + "\n";
                 }
             }
         }
