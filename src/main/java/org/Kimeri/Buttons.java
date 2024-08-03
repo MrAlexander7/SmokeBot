@@ -18,21 +18,15 @@ public class Buttons {
         contact.setText("Контакти");
         contact.setCallbackData("/contact:");
 
-        InlineKeyboardButton help = new InlineKeyboardButton();
-        help.setText("Допомога");
-        help.setCallbackData("/help:");
-
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         row1.add(catalog);
 
 
         List<InlineKeyboardButton> row2 = new ArrayList<>();
         row2.add(contact);
-        row2.add(help);
 
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         rows.add(row1);
-        rows.add(row2);
 
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
         keyboard.setKeyboard(rows);
@@ -42,7 +36,7 @@ public class Buttons {
 
     public static InlineKeyboardMarkup backButton() {
         InlineKeyboardButton back = new InlineKeyboardButton();
-        back.setText("Назад");
+        back.setText("Головне меню");
         back.setCallbackData("/back:");
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
@@ -60,15 +54,15 @@ public class Buttons {
     public static InlineKeyboardMarkup catalogButtons() {
 
         InlineKeyboardButton backMain = new InlineKeyboardButton();
-        backMain.setText("Назад");
+        backMain.setText("Головне меню");
         backMain.setCallbackData("/back:");
 
         InlineKeyboardButton next = new InlineKeyboardButton();
-        next.setText("->");
+        next.setText(MessageUser.NEXT);
         next.setCallbackData("/next:");
 
         InlineKeyboardButton back = new InlineKeyboardButton();
-        back.setText("<-");
+        back.setText(MessageUser.BACK);
         back.setCallbackData("/backPage:");
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();

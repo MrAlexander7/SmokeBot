@@ -8,6 +8,13 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.*;
 import lombok.SneakyThrows;
 import org.bson.Document;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageCaption;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,14 +24,21 @@ public class DataBase {
 
     public static final String connectionString = "mongodb+srv://Sasha:koza1985@cluster0.nduzk4r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
     public static final String databaseName = "Smoke";
-    public static final String collectionName = "Smoken";
+    public static final String collectionName = "SmokenPhoto";
 
     StringBuilder text = new StringBuilder();
+    EditMessageMedia editMessageMedia = new EditMessageMedia();
+    EditMessageCaption editMessageCaption = new EditMessageCaption();
+    Bot bot = new Bot();
+    CallbackQuery callbackQuery = new CallbackQuery();
+    Message messages = (Message) callbackQuery.getMessage();
+
+
 
     private static MongoClient mongoClient;
     public static MongoCursor<Document> cursor;
     public static List<Document> shownDocuments = new ArrayList<>();
-    private static int limit = 2;
+    private static int limit = 1;
     public static int currentPage = 0;
     private static long totalDocuments = 0;
     private static int stopNextPage = 0;
@@ -65,12 +79,11 @@ public class DataBase {
     }
 
     @SneakyThrows
-    public String viewData(String chatId, String callbackQueryId, Integer messageId, String callbackData) {
+    public String viewData(String chatId, String callbackQueryId, String callbackData) {
         //create a method to view data from the MongoDataBase in telegram bot and call it in the UserHandle class
         System.out.println("viewData");
 
         int count = 0;
-
         text.setLength(0);
 
         if ("/next:".equals(callbackData) || "/catalog:".equals(callbackData)) {
@@ -81,7 +94,7 @@ public class DataBase {
                     while (cursor.hasNext() && count < limit) {
                         Document doc = cursor.next();
                         shownDocuments.add(doc);
-                        printDocument(doc, text);
+                        sendDocument(chatId, doc);
                         count++;
                     }
                     if (!cursor.hasNext()) {
@@ -91,7 +104,7 @@ public class DataBase {
                 } else {
                     int endIndex = Math.min(startIndex + limit, shownDocuments.size());
                     for (int i = startIndex; i < endIndex; i++) {
-                        printDocument(shownDocuments.get(i), text);
+                       sendDocument(chatId ,shownDocuments.get(i));
                     }
                 }
             } else {
@@ -114,7 +127,7 @@ public class DataBase {
                 int startIndex = (currentPage - 1) * limit;
                 int endIndex = Math.min(startIndex + limit, shownDocuments.size());
                 for (int i = startIndex; i < endIndex; i++) {
-                    printDocument(shownDocuments.get(i), text);
+                    sendDocument(chatId ,shownDocuments.get(i));
                 }
             } else {
                 currentPage = 0;
@@ -122,19 +135,38 @@ public class DataBase {
             }
         }
 
-        String pageNumberText = "Сторінка " + currentPage + "\n\n";
-        text.insert(0, pageNumberText);
+        /*String pageNumberText = "Сторінка " + currentPage + "\n\n";
+        text.insert(0, pageNumberText);*/
 
         return text.toString();
 
     }
 
     @SneakyThrows
-    private void printDocument(Document name, StringBuilder text) {
+    public void sendDocument(String chatId, Document document) {
+        System.out.println("sendDocument");
+        String photoUrl = document.getString("PhotoUrl");
+        String discription = getDescription(document);
+
+        editMessageMedia.setMessageId(messages.getMessageId());
+        editMessageMedia.setChatId(chatId);
+        editMessageMedia.setMedia(new InputMediaPhoto(photoUrl));
+
+        editMessageCaption.setMessageId(messages.getMessageId());
+        editMessageCaption.setChatId(chatId);
+        editMessageCaption.setCaption(discription);
+        editMessageCaption.setReplyMarkup(Buttons.backButton());
+
+        bot.execute(editMessageMedia);
+        bot.execute(editMessageCaption);
+    }
+
+    @SneakyThrows
+    public String getDescription(Document name) {
         System.out.println("printDocument");
         Set<String> keys = name.keySet();
         for (String key : keys) {
-            if (!key.equals("_id")) {
+            if (!key.equals("_id") && !key.equals("PhotoUrl")) {
                 if (key.equals("Назва")) {
                     text.append("----------").append("\n").append(key).append(": ").append(name.get(key)).append("\n");
                 } else {
@@ -142,5 +174,6 @@ public class DataBase {
                 }
             }
         }
+        return text.toString();
     }
 }

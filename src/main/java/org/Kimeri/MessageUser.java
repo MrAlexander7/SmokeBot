@@ -38,4 +38,10 @@ public class MessageUser {
     public static final String ERROR = "⚠️ Помилка\n" +
             "\n" +
             "Вибачте, але я не розумію вашого запиту. Будь ласка, скористайтеся однією з команд або зв'яжіться з нашою підтримкою за допомогою команди /contact. Дякуємо!";
+
+    public static final String BACK = "⬅️ Назад";
+    public static final String NEXT = "➡️ Далі";
+
+    public static final String CONTACTURL = "https://drive.google.com/file/d/1Yz_jxUm3O6ewg9y6mho3X8eJTK8oRnpJ/view?usp=sharing";
+    public static final String STARTURL = "https://drive.google.com/file/d/1ixgXHWHhKoPkmSArD4725pMYKgvlg26Q/view?usp=sharing";
 }
