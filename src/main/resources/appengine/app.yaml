@@ -1,5 +1,7 @@
 runtime: custom
+entrypoint: 'java -jar target/SmokeBot-1.0-SNAPSHOT.jar'
 env: flex
+instance_class: F2
 automatic_scaling:
   min_num_instances: 1
 resources:

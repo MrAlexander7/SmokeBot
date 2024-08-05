@@ -12,6 +12,7 @@ import org.bson.Document;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class DataBase {
 
@@ -35,6 +36,8 @@ public class DataBase {
                 .build();
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
+                .applyToSocketSettings(builder -> builder.connectTimeout(60, TimeUnit.SECONDS))
+                .applyToSslSettings(builder -> builder.enabled(true))
                 .serverApi(serverApi)
                 .build();
         // Create a new client and connect to the server
