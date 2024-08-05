@@ -1,6 +1,8 @@
 runtime: custom
 entrypoint: 'java -jar target/SmokeBot-1.0-SNAPSHOT.jar'
 env: flex
+env_variables:
+  MONGO_URI: "mongodb+srv://Sasha:koza1985@cluster0.mongodb.net/test?retryWrites=true&w=majority"
 instance_class: F2
 automatic_scaling:
   min_num_instances: 1
