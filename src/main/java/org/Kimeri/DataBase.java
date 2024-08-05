@@ -37,7 +37,7 @@ public class DataBase {
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
                 .applyToSocketSettings(builder -> builder.connectTimeout(60, TimeUnit.SECONDS))
-                .applyToSslSettings(builder -> builder.enabled(true))
+                .applyToSslSettings(builder -> builder.enabled(false))
                 .serverApi(serverApi)
                 .build();
         // Create a new client and connect to the server
