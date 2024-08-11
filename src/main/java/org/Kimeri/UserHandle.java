@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 public class UserHandle {
     Bot bot = new Bot();
     SendMessage message = new SendMessage();
+    DataBase dataBase = new DataBase();
     SendMessagesWithPhoto sendMessagesWithPhoto = new SendMessagesWithPhoto();
 
     @SneakyThrows
@@ -34,37 +35,36 @@ public class UserHandle {
         switch (command) {
             case "/catalog":
                 System.out.println("catalog callback");
-
-                //sendMessagesWithPhoto.sendCatalogMessage(update);
-
-                /*String idCallBack = update.getCallbackQuery().getMessage().getChatId().toString();
-                Integer messageId = messages.getMessageId();
-                message.setChatId(idCallBack);
-                message.setText(MessageUser.CATALOG);
-                bot.execute(message);
-               dataBase.viewData(idCallBack, update.getCallbackQuery().getId(), messageId, update.getCallbackQuery().getData());*/
+                sendMessagesWithPhoto.sendCataloge(update);
                 break;
 
             case "/contact":
                 System.out.println("contact");
-                //.sendCatalogMessage(update);
+                sendMessagesWithPhoto.sendContact(update, callbackQuery);
                 break;
 
             case "/back":
                 System.out.println("back");
-                //sendMessagesWithPhoto.sendBackMenu(update);
+                sendMessagesWithPhoto.sendBackMenu(update, callbackQuery);
                 break;
 
             case "/next":
                 System.out.println("nextPage");
+                dataBase.handleCatalogCommand(update, "/next", messages.getMessageId().toString());
                 //sendMessagesWithPhoto.sendNextPage(update);
                 //dataBase.viewData(messages.getChatId().toString(), update.getCallbackQuery().getId(), messages.getMessageId(), update.getCallbackQuery().getData());
                 break;
 
             case "/backPage":
                 System.out.println("backPage");
+                dataBase.handleCatalogCommand(update, "/backPage", messages.getMessageId().toString());
                 //sendMessagesWithPhoto.sendBackPage(update);
                 //dataBase.viewData(messages.getChatId().toString(), update.getCallbackQuery().getId(), messages.getMessageId(), update.getCallbackQuery().getData());
+                break;
+
+            case "/backCatalog":
+                System.out.println("backCatalog");
+                sendMessagesWithPhoto.sendBackMenuCatalog(callbackQuery);
                 break;
 
             default:

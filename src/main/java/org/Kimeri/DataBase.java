@@ -8,17 +8,20 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.*;
 import lombok.SneakyThrows;
 import org.bson.Document;
+import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageCaption;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class DataBase {
 
@@ -26,22 +29,14 @@ public class DataBase {
     public static final String databaseName = "Smoke";
     public static final String collectionName = "SmokenPhoto";
 
-    StringBuilder text = new StringBuilder();
-    EditMessageMedia editMessageMedia = new EditMessageMedia();
-    EditMessageCaption editMessageCaption = new EditMessageCaption();
     Bot bot = new Bot();
     CallbackQuery callbackQuery = new CallbackQuery();
-    Message messages = (Message) callbackQuery.getMessage();
-
-
 
     private static MongoClient mongoClient;
     public static MongoCursor<Document> cursor;
     public static List<Document> shownDocuments = new ArrayList<>();
-    private static int limit = 1;
     public static int currentPage = 0;
     private static long totalDocuments = 0;
-    private static int stopNextPage = 0;
 
     public static void main(String[] args) {
         ServerApi serverApi = ServerApi.builder()
@@ -75,105 +70,111 @@ public class DataBase {
             cursor = collection.find().iterator();
             totalDocuments = collection.countDocuments();
             shownDocuments.clear();
+            currentPage = 0; // Почати з першої сторінки
         }
     }
 
     @SneakyThrows
-    public String viewData(String chatId, String callbackQueryId, String callbackData) {
-        //create a method to view data from the MongoDataBase in telegram bot and call it in the UserHandle class
-        System.out.println("viewData");
-
-        int count = 0;
-        text.setLength(0);
-
-        if ("/next:".equals(callbackData) || "/catalog:".equals(callbackData)) {
-            if (currentPage * limit < totalDocuments) {
-                currentPage++;
-                int startIndex = (currentPage - 1) * limit;
-                if (shownDocuments.size() < startIndex + limit) {
-                    while (cursor.hasNext() && count < limit) {
-                        Document doc = cursor.next();
-                        shownDocuments.add(doc);
-                        sendDocument(chatId, doc);
-                        count++;
-                    }
-                    if (!cursor.hasNext()) {
-                        cursor.close();
-                        cursor = null;
-                    }
-                } else {
-                    int endIndex = Math.min(startIndex + limit, shownDocuments.size());
-                    for (int i = startIndex; i < endIndex; i++) {
-                       sendDocument(chatId ,shownDocuments.get(i));
-                    }
-                }
-            } else {
-                int pages = (int) Math.ceil((double) totalDocuments / limit);
-                if (stopNextPage == 1) {
-                    text.append("Ви досягли кінця списку.\n");
-                } else {
-                    currentPage++;
-                    stopNextPage = 1;
-                    if (currentPage >= pages) {
-                        text.append("Ви досягли кінця списку.\n");
-
-                    }
-                }
-                //text.append("Ви досягли кінця списку.\n");
-            }
-        } else if ("/backPage:".equals(callbackData)) {
-            if (currentPage > 1) {
-                currentPage--;
-                int startIndex = (currentPage - 1) * limit;
-                int endIndex = Math.min(startIndex + limit, shownDocuments.size());
-                for (int i = startIndex; i < endIndex; i++) {
-                    sendDocument(chatId ,shownDocuments.get(i));
-                }
-            } else {
-                currentPage = 0;
-                text.append("Ви досягли початку списку.\n");
-            }
+    public void handleCatalogCommand(Update update, String command, String messageID) {
+        if (cursor == null || !cursor.hasNext()) {
+            initCursor();
         }
 
-        /*String pageNumberText = "Сторінка " + currentPage + "\n\n";
-        text.insert(0, pageNumberText);*/
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String chatId = callbackQuery.getMessage().getChatId().toString();
 
-        return text.toString();
-
+        switch (command) {
+            case "/catalog":
+                sendCatalogMessage(chatId);
+                break;
+            case "/next":
+                sendNextPage(chatId, Integer.valueOf(messageID));
+                break;
+            case "/backPage":
+                sendBackPage(chatId, Integer.valueOf(messageID));
+                break;
+            default:
+                break;
+        }
     }
 
     @SneakyThrows
-    public void sendDocument(String chatId, Document document) {
-        System.out.println("sendDocument");
-        String photoUrl = document.getString("PhotoUrl");
-        String discription = getDescription(document);
+    private void sendCatalogMessage(String chatId) {
+        if (cursor.hasNext()) {
+            Document doc = cursor.next();
+            shownDocuments.add(doc);
 
-        editMessageMedia.setMessageId(messages.getMessageId());
-        editMessageMedia.setChatId(chatId);
-        editMessageMedia.setMedia(new InputMediaPhoto(photoUrl));
+            SendPhoto sendPhoto = new SendPhoto();
+            sendPhoto.setChatId(chatId);
+            sendPhoto.setPhoto(new InputFile(doc.getString("PhotoUrl")));
+            sendPhoto.setCaption(formatCaption(doc));
+            sendPhoto.setReplyMarkup(Buttons.catalogButtons());
 
-        editMessageCaption.setMessageId(messages.getMessageId());
-        editMessageCaption.setChatId(chatId);
-        editMessageCaption.setCaption(discription);
-        editMessageCaption.setReplyMarkup(Buttons.backButton());
+            bot.execute(sendPhoto);
+        }
+    }
 
-        bot.execute(editMessageMedia);
-        bot.execute(editMessageCaption);
+    private void sendNextPage(String chatId, Integer messageId) {
+        if (currentPage < totalDocuments - 1) {
+            currentPage++;
+            if (currentPage >= shownDocuments.size()) {
+                if (cursor.hasNext()) {
+                    Document doc = cursor.next();
+                    shownDocuments.add(doc);
+                }
+            }
+            sendEditCatalogMessage(chatId, messageId, shownDocuments.get(currentPage));
+        } else {
+            currentPage = 0;
+            initCursor();
+            sendEditCatalogMessage(chatId, messageId, shownDocuments.get(currentPage));
+        }
+    }
+
+    private void sendBackPage(String chatId, Integer messageId) {
+        if (currentPage > 0) {
+            currentPage--;
+        } else {
+            currentPage = (int) totalDocuments - 1;
+            reinitializeCursorToCurrentPage();
+        }
+        sendEditCatalogMessage(chatId, messageId, shownDocuments.get(currentPage));
+    }
+
+    private void reinitializeCursorToCurrentPage() {
+        initCursor();
+        for (int i = 0; i < currentPage; i++) {
+            cursor.next();
+        }
     }
 
     @SneakyThrows
-    public String getDescription(Document name) {
-        System.out.println("printDocument");
-        Set<String> keys = name.keySet();
-        for (String key : keys) {
-            if (!key.equals("_id") && !key.equals("PhotoUrl")) {
-                if (key.equals("Назва")) {
-                    text.append("----------").append("\n").append(key).append(": ").append(name.get(key)).append("\n");
-                } else {
-                    text.append(key).append(": ").append(name.get(key)).append("\n");
-                }
-            }
-        }
-        return text.toString();
+    private void sendEditCatalogMessage(String chatId, Integer messageId, Document doc) {
+            EditMessageMedia editMessageMedia = new EditMessageMedia();
+            editMessageMedia.setChatId(chatId);
+            editMessageMedia.setMessageId(messageId);
+
+            InputMediaPhoto inputMediaPhoto = new InputMediaPhoto();
+            inputMediaPhoto.setMedia(doc.getString("PhotoUrl"));
+            editMessageMedia.setMedia(inputMediaPhoto);
+
+            EditMessageCaption editMessageCaption = new EditMessageCaption();
+            editMessageCaption.setChatId(chatId);
+            editMessageCaption.setMessageId(messageId);
+            editMessageCaption.setCaption(formatCaption(doc));
+
+            editMessageMedia.setReplyMarkup(Buttons.catalogButtons());
+            editMessageCaption.setReplyMarkup(Buttons.catalogButtons());
+
+            bot.execute(editMessageMedia);
+            bot.execute(editMessageCaption);
+    }
+
+    private String formatCaption(Document doc) {
+        return
+                "Назва: " + doc.getString("Назва") + "\n" +
+                "Смак: " + doc.getString("Смак") + "\n" +
+                "Нікотин: " + doc.getString("Нікотин") + "\n" +
+                "Ціна: " + doc.getString("Ціна (Грн)");
     }
 }

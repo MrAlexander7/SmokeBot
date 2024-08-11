@@ -7,6 +7,8 @@ public class MessageUser {
             "\n" +
             "Наш бот допоможе вам швидко та зручно ознайомитися з нашим асортиментом рідин для вашого вейпу. \uD83D\uDECD\uFE0F\n" +
             "\n" +
+            "Якщо вас зацікавить якийсь із товарів, будь ласка, звертайтеся до мене для замовлення. Ви можете знайти мої контакти в меню \"Контакти\".\n" +
+            "\n" +
             "Дякуємо, що обрали SmokeBot. Приємного перегляду та смачної пари! \uD83C\uDF2C\uFE0F";
 
     public static final String STARTMESSAGEADMIN = "";
@@ -21,27 +23,7 @@ public class MessageUser {
             "\uD83D\uDCAC Telegram: @Mr_Kimeri\n" +
             "\n" +
             "Ми завжди раді допомогти вам та відповісти на всі ваші запитання! Дякуємо, що обрали SmokeBot!";
-    public static final String CATALOG = "\uD83D\uDCC3 Каталог\n" +
-            "\n" +
-            "Ознайомтеся з нашим асортиментом рідин для вейпу та оберіть те, що вам підходить! \uD83D\uDECD\uFE0F\n" +
-            "\n";
-    public static final String HELP = "ℹ\uFE0F Допомога\n" +
-            "\n" +
-            "Ласкаво просимо до SmokeBot! Ми тут, щоб допомогти вам знайти та придбати найкращі жижки для електронних сигарет.\n" +
-            "\n" +
-            "Якщо у вас виникли питання або потрібна допомога, зв'яжіться з нашою підтримкою:\n" +
-            "\n" +
-            "\uD83D\uDCF1 Телефон: +380 (99) 963-7315\n" +
-            "\uD83D\uDCAC Telegram: @Mr_Kimeri\n" +
-            "\n" +
-            "Ми завжди раді допомогти вам! Дякуємо, що обрали SmokeBot!";
-    public static final String ERROR = "⚠️ Помилка\n" +
-            "\n" +
-            "Вибачте, але я не розумію вашого запиту. Будь ласка, скористайтеся однією з команд або зв'яжіться з нашою підтримкою за допомогою команди /contact. Дякуємо!";
 
     public static final String BACK = "⬅️ Назад";
     public static final String NEXT = "➡️ Далі";
-
-    public static final String CONTACTURL = "https://drive.google.com/file/d/1Yz_jxUm3O6ewg9y6mho3X8eJTK8oRnpJ/view?usp=sharing";
-    public static final String STARTURL = "https://drive.google.com/file/d/1ixgXHWHhKoPkmSArD4725pMYKgvlg26Q/view?usp=sharing";
 }

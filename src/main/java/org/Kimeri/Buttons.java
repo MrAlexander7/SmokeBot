@@ -21,12 +21,12 @@ public class Buttons {
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         row1.add(catalog);
 
-
         List<InlineKeyboardButton> row2 = new ArrayList<>();
         row2.add(contact);
 
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         rows.add(row1);
+        rows.add(row2);
 
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
         keyboard.setKeyboard(rows);
@@ -55,7 +55,7 @@ public class Buttons {
 
         InlineKeyboardButton backMain = new InlineKeyboardButton();
         backMain.setText("Головне меню");
-        backMain.setCallbackData("/back:");
+        backMain.setCallbackData("/backCatalog:");
 
         InlineKeyboardButton next = new InlineKeyboardButton();
         next.setText(MessageUser.NEXT);
