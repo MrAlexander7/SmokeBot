@@ -22,7 +22,7 @@ public class DataBase {
 
     public static void init() {
         if (mongoClient == null) {
-            mongoClient = MongoClients.create("mongodb+srv://Sasha:koza1985@cluster0.nduzk4r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
+            mongoClient = MongoClients.create("Str connect");
             database = mongoClient.getDatabase("Smoke");
         }
     }
