@@ -51,7 +51,7 @@ public class Buttons {
         return keyboard;
     }
 
-    public static InlineKeyboardMarkup catalogButtons() {
+    public static InlineKeyboardMarkup catalogButtons(int currentPage) {
 
         InlineKeyboardButton backMain = new InlineKeyboardButton();
         backMain.setText("Головне меню");
@@ -59,11 +59,11 @@ public class Buttons {
 
         InlineKeyboardButton next = new InlineKeyboardButton();
         next.setText(MessageUser.NEXT);
-        next.setCallbackData("/next:");
+        next.setCallbackData("/next:" + (currentPage + 1));
 
         InlineKeyboardButton back = new InlineKeyboardButton();
         back.setText(MessageUser.BACK);
-        back.setCallbackData("/backPage:");
+        back.setCallbackData("/backPage:" + (currentPage - 1));
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         row1.add(backMain);

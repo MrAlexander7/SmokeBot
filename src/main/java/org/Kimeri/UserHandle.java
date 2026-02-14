@@ -7,71 +7,67 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 public class UserHandle {
-    Bot bot = new Bot();
-    SendMessage message = new SendMessage();
-    DataBase dataBase = new DataBase();
-    SendMessagesWithPhoto sendMessagesWithPhoto = new SendMessagesWithPhoto();
+    private final Bot bot;
+    private final SendMessagesWithPhoto sendMessagesWithPhoto;
+    private final DataBase dataBase;
+
+    public UserHandle(Bot bot) {
+        this.bot = bot;
+        this.dataBase = new DataBase(bot); // Передаємо бота в базу
+        this.sendMessagesWithPhoto = new SendMessagesWithPhoto(bot, dataBase);
+    }
 
     @SneakyThrows
     public void handle(Update update) {
-        if (update.getMessage().getText().equals("/start")) {
-            System.out.println("start");
+        String text = update.getMessage().getText();
+        if (text.equals("/start")) {
             sendMessagesWithPhoto.sendStart(update);
         } else {
+            SendMessage message = new SendMessage();
             message.setChatId(update.getMessage().getChatId().toString());
             message.setText("Не вірна команда");
             bot.execute(message);
         }
     }
+
     @SneakyThrows
     public void handleCallback(Update update, CallbackQuery callbackQuery) {
-        System.out.println("callback");
-
-
-        Message messages = (Message) callbackQuery.getMessage();
         String[] data = callbackQuery.getData().split(":");
         String command = data[0];
+        String chatId = callbackQuery.getMessage().getChatId().toString();
+
+        // Безпечно отримуємо MessageId, якщо це повідомлення
+        Integer messageId = null;
+        if (callbackQuery.getMessage() instanceof Message message) {
+            messageId = message.getMessageId();
+        }
 
         switch (command) {
             case "/catalog":
-                System.out.println("catalog callback");
-                sendMessagesWithPhoto.sendCataloge(update);
-                break;
-
-            case "/contact":
-                System.out.println("contact");
-                sendMessagesWithPhoto.sendContact(update, callbackQuery);
-                break;
-
-            case "/back":
-                System.out.println("back");
-                sendMessagesWithPhoto.sendBackMenu(update, callbackQuery);
+                // При першому натисканні на "Каталог" передаємо null як messageId, 
+                // щоб надіслати НОВЕ повідомлення з картинкою
+                dataBase.sendCatalogMessage(chatId, 0, null);
                 break;
 
             case "/next":
-                System.out.println("nextPage");
-                dataBase.handleCatalogCommand(update, "/next", messages.getMessageId().toString());
-                //sendMessagesWithPhoto.sendNextPage(update);
-                //dataBase.viewData(messages.getChatId().toString(), update.getCallbackQuery().getId(), messages.getMessageId(), update.getCallbackQuery().getData());
+                // Витягуємо номер сторінки з даних кнопки (наприклад, "/next:1")
+                int nextPage = data.length > 1 ? Integer.parseInt(data[1]) : 0;
+                dataBase.sendCatalogMessage(chatId, nextPage, messageId);
                 break;
 
             case "/backPage":
-                System.out.println("backPage");
-                dataBase.handleCatalogCommand(update, "/backPage", messages.getMessageId().toString());
-                //sendMessagesWithPhoto.sendBackPage(update);
-                //dataBase.viewData(messages.getChatId().toString(), update.getCallbackQuery().getId(), messages.getMessageId(), update.getCallbackQuery().getData());
+                int prevPage = data.length > 1 ? Integer.parseInt(data[1]) : 0;
+                dataBase.sendCatalogMessage(chatId, prevPage, messageId);
                 break;
 
             case "/backCatalog":
-                System.out.println("backCatalog");
                 sendMessagesWithPhoto.sendBackMenuCatalog(callbackQuery);
                 break;
-
-            default:
-                System.out.println("default");
-                message.setChatId(messages.getChatId().toString());
-                message.setText("Не вірна команда");
-                bot.execute(message);
+            case "/contact":
+                sendMessagesWithPhoto.sendContact(callbackQuery);
+                break;
+            case "/back":
+                sendMessagesWithPhoto.sendBackMenu(callbackQuery);
                 break;
         }
     }
